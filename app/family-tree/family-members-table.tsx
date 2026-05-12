@@ -29,8 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import type { FamilyMember } from "./actions";
+import { Plus, Trash2, Search, ChevronLeft, ChevronRight, Loader2, X, Calendar } from "lucide-react";
+import type { FamilyMember, SpouseRecord } from "./actions";
 import {
   createFamilyMember,
   updateFamilyMember,
@@ -43,6 +43,7 @@ import { FatherCombobox } from "./father-combobox";
 import { RichTextEditor } from "@/components/rich-text/editor";
 import { RichTextViewer } from "@/components/rich-text/viewer";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface FamilyMembersTableProps {
   initialData: FamilyMember[];
@@ -74,7 +75,7 @@ export function FamilyMembersTable({
   const [editingMember, setEditingMember] = React.useState<FamilyMember | null>(null);
   const [biographyMember, setBiographyMember] = React.useState<FamilyMember | null>(null);
   const [parentOptions, setParentOptions] = React.useState<
-    { id: number; name: string; generation: number | null }[]
+    { id: number; name: string; generation: number | null; gender: string | null }[]
   >([]);
 
   // 新增表单状态
@@ -83,20 +84,32 @@ export function FamilyMembersTable({
     generation: "",
     sibling_order: "",
     father_id: "",
+    mother_id: "",
+    mother_name: "",
     gender: "",
     official_position: "",
     is_alive: true,
+    is_root: false,
     spouse: "",
     remarks: "",
     birthday: "",
     death_date: "",
     residence_place: "",
   });
+  const [spousesList, setSpousesList] = React.useState<SpouseRecord[]>([]);
+  const [editingSpouse, setEditingSpouse] = React.useState<SpouseRecord | null>(null);
+  const [isEditingSpouse, setIsEditingSpouse] = React.useState(false);
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
   // 判断是否为编辑模式
   const isEditMode = editingMember !== null;
+
+  // 女性成员选项（用于母亲选择）
+  const motherOptions = React.useMemo(
+    () => parentOptions.filter((p) => p.gender === "女"),
+    [parentOptions]
+  );
 
   // 加载父亲选择列表
   React.useEffect(() => {
@@ -175,15 +188,21 @@ export function FamilyMembersTable({
       generation: "",
       sibling_order: "",
       father_id: "",
+      mother_id: "",
+      mother_name: "",
       gender: "",
       official_position: "",
       is_alive: true,
+      is_root: false,
       spouse: "",
       remarks: "",
       birthday: "",
       death_date: "",
       residence_place: "",
     });
+    setSpousesList([]);
+    setEditingSpouse(null);
+    setIsEditingSpouse(false);
     setEditingMember(null);
   };
 
@@ -201,21 +220,27 @@ export function FamilyMembersTable({
       generation: member.generation?.toString() ?? "",
       sibling_order: member.sibling_order?.toString() ?? "",
       father_id: member.father_id?.toString() ?? "null",
+      mother_id: member.mother_id?.toString() ?? "",
+      mother_name: member.mother_name ?? "",
       gender: member.gender ?? "",
       official_position: member.official_position ?? "",
       is_alive: member.is_alive,
+      is_root: member.is_root,
       spouse: member.spouse ?? "",
       remarks: member.remarks ?? "",
       birthday: member.birthday ?? "",
       death_date: member.death_date ?? "",
       residence_place: member.residence_place ?? "",
     });
+    setSpousesList(member.spouses || []);
     setIsDialogOpen(true);
   };
 
   // 关闭弹窗
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setIsEditingSpouse(false);
+    setEditingSpouse(null);
     resetForm();
   };
 
@@ -235,13 +260,17 @@ export function FamilyMembersTable({
       sibling_order: formData.sibling_order
         ? parseInt(formData.sibling_order)
         : null,
-      father_id: (formData.father_id && formData.father_id !== "null") 
-        ? parseInt(formData.father_id) 
+      father_id: (formData.father_id && formData.father_id !== "null")
+        ? parseInt(formData.father_id)
         : null,
+      mother_id: formData.mother_id ? parseInt(formData.mother_id) : null,
+      mother_name: formData.mother_name || null,
       gender: (formData.gender as "男" | "女") || null,
       official_position: formData.official_position || null,
       is_alive: formData.is_alive,
+      is_root: formData.is_root,
       spouse: formData.spouse || null,
+      spouses: spousesList.filter(s => s.name.trim()),
       remarks: formData.remarks || null,
       birthday: formData.birthday || null,
       death_date: (!formData.is_alive && formData.death_date) ? formData.death_date : null,
@@ -347,15 +376,55 @@ export function FamilyMembersTable({
                       isLoading={isLoadingParents}
                       onChange={(value) => {
                         const father = parentOptions.find(p => p.id.toString() === value);
-                        const newGeneration = father && father.generation !== null 
-                          ? (father.generation + 1).toString() 
+                        const newGeneration = father && father.generation !== null
+                          ? (father.generation + 1).toString()
                           : (value === "null" ? "" : formData.generation);
-                        setFormData({ 
-                          ...formData, 
-                          father_id: value, 
-                          generation: newGeneration 
+                        setFormData({
+                          ...formData,
+                          father_id: value,
+                          generation: newGeneration
                         });
                       }}
+                    />
+                  </div>
+                </div>
+
+                {/* 母亲 */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="mother" className="text-right">
+                    母亲
+                  </Label>
+                  <div className="col-span-3 flex gap-2">
+                    <div className="flex-1">
+                      <FatherCombobox
+                        value={formData.mother_id}
+                        options={motherOptions}
+                        isLoading={isLoadingParents}
+                        onChange={(value) => {
+                          if (value && value !== "null") {
+                            const mother = motherOptions.find(p => p.id.toString() === value);
+                            setFormData({
+                              ...formData,
+                              mother_id: value,
+                              mother_name: mother?.name ?? "",
+                            });
+                          } else {
+                            setFormData({ ...formData, mother_id: "", mother_name: "" });
+                          }
+                        }}
+                      />
+                    </div>
+                    <Input
+                      placeholder="或输入姓名"
+                      value={formData.mother_name}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          mother_name: e.target.value,
+                          mother_id: e.target.value ? "" : formData.mother_id,
+                        });
+                      }}
+                      className="flex-1"
                     />
                   </div>
                 </div>
@@ -488,6 +557,28 @@ export function FamilyMembersTable({
                   </div>
                 </div>
 
+                {/* 族谱起点 */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="is_root" className="text-right">
+                    族谱起点
+                  </Label>
+                  <div className="col-span-3 flex items-center space-x-2">
+                    <Checkbox
+                      id="is_root"
+                      checked={formData.is_root}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          is_root: checked as boolean,
+                        })
+                      }
+                    />
+                    <Label htmlFor="is_root" className="font-normal text-muted-foreground">
+                      设为族谱第一代起点（仅一个）
+                    </Label>
+                  </div>
+                </div>
+
                 {/* 卒年 (仅去世可选) */}
                 {!formData.is_alive && (
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -507,19 +598,141 @@ export function FamilyMembersTable({
                 )}
 
                 {/* 配偶 */}
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="spouse" className="text-right">
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label className="text-right pt-2">
                     配偶
                   </Label>
-                  <Input
-                    id="spouse"
-                    value={formData.spouse}
-                    onChange={(e) =>
-                      setFormData({ ...formData, spouse: e.target.value })
-                    }
-                    className="col-span-3"
-                  />
+                  <div className="col-span-3 space-y-2">
+                    {spousesList.map((s, i) => (
+                      <div key={i} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium truncate">{s.name}</span>
+                            {s.start_date && (
+                              <span className="text-xs text-muted-foreground">
+                                {s.start_date}{s.end_date ? ` ~ ${s.end_date}` : ""}
+                              </span>
+                            )}
+                          </div>
+                          {s.end_reason && (
+                            <span className="text-xs text-muted-foreground">({s.end_reason})</span>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          onClick={() => {
+                            setEditingSpouse({ ...s, sort_order: i });
+                            setIsEditingSpouse(true);
+                          }}
+                        >
+                          <Calendar className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-destructive"
+                          onClick={() => setSpousesList(spousesList.filter((_, j) => j !== i))}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setEditingSpouse({ spouse_member_id: null, name: "", start_date: null, end_date: null, end_reason: null, sort_order: spousesList.length });
+                        setIsEditingSpouse(true);
+                      }}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" /> 添加配偶
+                    </Button>
+                  </div>
                 </div>
+
+                {/* 配偶编辑弹窗 */}
+                {isEditingSpouse && editingSpouse && (
+                  <div className="grid grid-cols-4 items-start gap-4 p-3 border rounded-md bg-muted/20">
+                    <Label className="text-right pt-2">
+                      {editingSpouse.name ? "编辑配偶" : "添加配偶"}
+                    </Label>
+                    <div className="col-span-3 space-y-3">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="配偶姓名 *"
+                          value={editingSpouse.name}
+                          onChange={(e) => setEditingSpouse({ ...editingSpouse, name: e.target.value })}
+                          className="flex-1"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">开始日期</Label>
+                          <Input
+                            type="date"
+                            value={editingSpouse.start_date ?? ""}
+                            onChange={(e) => setEditingSpouse({ ...editingSpouse, start_date: e.target.value || null })}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">结束日期</Label>
+                          <Input
+                            type="date"
+                            value={editingSpouse.end_date ?? ""}
+                            onChange={(e) => setEditingSpouse({ ...editingSpouse, end_date: e.target.value || null })}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">结束原因（如去世、离异等）</Label>
+                        <Input
+                          placeholder="选填"
+                          value={editingSpouse.end_reason ?? ""}
+                          onChange={(e) => setEditingSpouse({ ...editingSpouse, end_reason: e.target.value || null })}
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setIsEditingSpouse(false); setEditingSpouse(null); }}
+                        >
+                          取消
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={!editingSpouse.name.trim()}
+                          onClick={() => {
+                            if (!editingSpouse.name.trim()) return;
+                            const idx = editingSpouse.sort_order;
+                            if (idx < spousesList.length) {
+                              // 编辑已有
+                              const updated = [...spousesList];
+                              updated[idx] = editingSpouse;
+                              setSpousesList(updated);
+                            } else {
+                              // 新增
+                              setSpousesList([...spousesList, editingSpouse]);
+                            }
+                            setIsEditingSpouse(false);
+                            setEditingSpouse(null);
+                          }}
+                        >
+                          确定
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* 备注 / 生平事迹 */}
                 <div className="grid grid-cols-4 items-start gap-4">
@@ -573,12 +786,14 @@ export function FamilyMembersTable({
               <TableHead className="w-20">世代</TableHead>
               <TableHead className="w-20">排行</TableHead>
               <TableHead className="w-24">父亲</TableHead>
+              <TableHead className="w-24">母亲</TableHead>
               <TableHead className="w-16">性别</TableHead>
               <TableHead>生日</TableHead>
               <TableHead>卒年</TableHead>
               <TableHead>居住地</TableHead>
               <TableHead>官职</TableHead>
               <TableHead className="w-20">在世</TableHead>
+              <TableHead className="w-16">起点</TableHead>
               <TableHead>配偶</TableHead>
               <TableHead>生平事迹</TableHead>
               <TableHead className="w-44">更新时间</TableHead>
@@ -587,7 +802,7 @@ export function FamilyMembersTable({
           <TableBody>
             {initialData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={14} className="h-24 text-center">
+                <TableCell colSpan={16} className="h-24 text-center">
                   暂无数据
                 </TableCell>
               </TableRow>
@@ -651,6 +866,34 @@ export function FamilyMembersTable({
                       "-"
                     )}
                   </TableCell>
+                  <TableCell>
+                    {member.mother_name ? (
+                      member.mother_id ? (
+                        <button
+                          type="button"
+                          className="text-primary hover:underline cursor-pointer text-left"
+                          onClick={async () => {
+                            if (!member.mother_id) return;
+                            setLoadingFatherId(member.mother_id);
+                            try {
+                              const motherData = await fetchMemberById(member.mother_id);
+                              if (motherData) {
+                                handleOpenEditDialog(motherData);
+                              }
+                            } finally {
+                              setLoadingFatherId(null);
+                            }
+                          }}
+                        >
+                          {member.mother_name}
+                        </button>
+                      ) : (
+                        member.mother_name
+                      )
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
                   <TableCell>{member.gender ?? "-"}</TableCell>
                   <TableCell>
                     {member.birthday
@@ -671,7 +914,20 @@ export function FamilyMembersTable({
                   <TableCell>{member.residence_place ?? "-"}</TableCell>
                   <TableCell>{member.official_position ?? "-"}</TableCell>
                   <TableCell>{member.is_alive ? "是" : "否"}</TableCell>
-                  <TableCell>{member.spouse ?? "-"}</TableCell>
+                  <TableCell>
+                    {member.is_root ? (
+                      <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:bg-amber-900/30 text-xs">起点</Badge>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {member.spouses && member.spouses.length > 0
+                      ? member.spouses.length <= 2
+                        ? member.spouses.map((s) => s.name).join("、")
+                        : `${member.spouses.slice(0, 2).map((s) => s.name).join("、")} 等${member.spouses.length}位`
+                      : member.spouse || "-"}
+                  </TableCell>
                   <TableCell>
                     {member.remarks ? (
                       <Button 

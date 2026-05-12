@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npx tsx *)",
+      "WebFetch(domain:baike.baidu.com)",
+      "WebSearch",
+      "Bash(npx tsc *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "mcp__browsermcp__browser_navigate",
+      "Bash(sqlite3 *)",
+      "Bash(curl -s http://localhost:3000/family-tree/statistics)",
+      "Bash(open *)",
+      "Bash(mkdir -p /Users/minsin/Documents/DevProject/GitProject/pure-genealogy/.claude/memory)",
+      "Bash(mv /Users/minsin/.claude/projects/-Users-minsin-Documents-DevProject-GitProject-pure-genealogy/memory/*.md /Users/minsin/Documents/DevProject/GitProject/pure-genealogy/.claude/memory/)",
+      "Bash(rm -rf /Users/minsin/.claude/projects/-Users-minsin-Documents-DevProject-GitProject-pure-genealogy/memory)",
+      "Bash(git add *)",
+      "Bash(git reset *)"
+    ]
+  }
+}

@@ -105,6 +105,14 @@ const MemberPage = memo(function MemberPage({
                     </div>
                     <div className="space-y-0.5">
                         <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+                            母亲
+                        </span>
+                        <p className="text-sm text-stone-700">
+                            {member.mother_display_name || "未记录"}
+                        </p>
+                    </div>
+                    <div className="space-y-0.5">
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
                             配偶
                         </span>
                         <p className="text-sm text-stone-700">

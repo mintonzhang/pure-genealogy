@@ -1,0 +1,2 @@
+- [项目技术栈与数据库](project_tech.md) — Next.js 15 + SQLite，数据库位置、迁移模式、数据现状
+- [图谱组件开发注意事项](graph_components.md) — 2D/3D图谱根节点检测、非主树处理、Map图标冲突修复

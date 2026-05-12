@@ -1,100 +1,109 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getDb } from "@/lib/db";
 
 export interface BiographyMember {
-    id: number;
-    name: string;
-    generation: number | null;
-    sibling_order: number | null;
-    gender: "男" | "女" | null;
-    birthday: string | null;
-    death_date: string | null;
-    is_alive: boolean;
-    spouse: string | null;
-    official_position: string | null;
-    residence_place: string | null;
-    remarks: string;
-    father_name: string | null;
+  id: number;
+  name: string;
+  generation: number | null;
+  sibling_order: number | null;
+  father_id: number | null;
+  mother_id: number | null;
+  mother_name: string | null;
+  gender: "男" | "女" | null;
+  birthday: string | null;
+  death_date: string | null;
+  is_alive: boolean;
+  spouse: string | null;
+  official_position: string | null;
+  residence_place: string | null;
+  remarks: string;
+  father_name: string | null;
+  mother_display_name: string | null;
 }
 
 /**
  * 获取所有有生平事迹的成员，用于生平册展示
  */
 export async function fetchMembersWithBiography(): Promise<{
-    data: BiographyMember[];
-    error: string | null;
+  data: BiographyMember[];
+  error: string | null;
 }> {
-    const supabase = await createClient();
+  const db = getDb();
 
-    // 查询有 remarks 的成员
-    const { data, error } = await supabase
-        .from("family_members")
-        .select("*")
-        .not("remarks", "is", null)
-        .neq("remarks", "")
-        .order("generation", { ascending: true })
-        .order("sibling_order", { ascending: true });
-
-    if (error) {
-        return { data: [], error: error.message };
-    }
+  try {
+    const data = db
+      .prepare(
+        "SELECT * FROM family_members WHERE remarks IS NOT NULL AND remarks != '' ORDER BY generation ASC, sibling_order ASC"
+      )
+      .all() as BiographyMember[];
 
     // 过滤掉 remarks 只是空的 JSON 结构的情况
-    const validData = (data || []).filter((item) => {
-        if (!item.remarks) return false;
-        try {
-            const parsed = JSON.parse(item.remarks);
-            // 检查是否有实质内容
-            if (Array.isArray(parsed)) {
-                return parsed.some((node: any) => {
-                    if (node.children && Array.isArray(node.children)) {
-                        return node.children.some((child: any) => child.text && child.text.trim());
-                    }
-                    return false;
-                });
+    const validData = data.filter((item) => {
+      if (!item.remarks) return false;
+      try {
+        const parsed = JSON.parse(item.remarks);
+        if (Array.isArray(parsed)) {
+          return parsed.some((node: any) => {
+            if (node.children && Array.isArray(node.children)) {
+              return node.children.some((child: any) => child.text && child.text.trim());
             }
             return false;
-        } catch {
-            // 如果不是 JSON，检查是否为非空字符串
-            return item.remarks.trim().length > 0;
+          });
         }
+        return false;
+      } catch {
+        return item.remarks.trim().length > 0;
+      }
     });
 
-    // 获取所有父亲 ID
+    // 获取父/母亲 ID
     const fatherIds = validData
-        .map((item) => item.father_id)
-        .filter((id): id is number => id !== null);
+      .map((item) => item.father_id)
+      .filter((id): id is number => id !== null);
+    const motherIds = validData
+      .map((item) => item.mother_id)
+      .filter((id): id is number => id !== null);
 
-    // 批量查询父亲姓名
     let fatherMap: Record<number, string> = {};
-    if (fatherIds.length > 0) {
-        const { data: fathers } = await supabase
-            .from("family_members")
-            .select("id, name")
-            .in("id", fatherIds);
+    let motherMap: Record<number, string> = {};
 
-        if (fathers) {
-            fatherMap = Object.fromEntries(fathers.map((f) => [f.id, f.name]));
-        }
+    const allParentIds = [...new Set([...fatherIds, ...motherIds])];
+    if (allParentIds.length > 0) {
+      const placeholders = allParentIds.map(() => "?").join(",");
+      const parents = db
+        .prepare(`SELECT id, name FROM family_members WHERE id IN (${placeholders})`)
+        .all(...allParentIds) as { id: number; name: string }[];
+      const parentMap = Object.fromEntries(parents.map((p) => [p.id, p.name]));
+      fatherMap = Object.fromEntries(fatherIds.filter((id) => parentMap[id]).map((id) => [id, parentMap[id]]));
+      motherMap = Object.fromEntries(motherIds.filter((id) => parentMap[id]).map((id) => [id, parentMap[id]]));
     }
 
-    // 转换数据格式
+    // 批量查询配偶
+    const memberIds = validData.map((item) => item.id);
+    let spousesMap: Record<number, string> = {};
+    if (memberIds.length > 0) {
+      const placeholders = memberIds.map(() => "?").join(",");
+      const allSpouses = db
+        .prepare(`SELECT member_id, name FROM spouses WHERE member_id IN (${placeholders}) ORDER BY sort_order ASC`)
+        .all(...memberIds) as { member_id: number; name: string }[];
+      for (const s of allSpouses) {
+        spousesMap[s.member_id] = spousesMap[s.member_id]
+          ? `${spousesMap[s.member_id]}、${s.name}`
+          : s.name;
+      }
+    }
+
     const transformedData: BiographyMember[] = validData.map((item) => ({
-        id: item.id,
-        name: item.name,
-        generation: item.generation,
-        sibling_order: item.sibling_order,
-        gender: item.gender,
-        birthday: item.birthday,
-        death_date: item.death_date,
-        is_alive: item.is_alive,
-        spouse: item.spouse,
-        official_position: item.official_position,
-        residence_place: item.residence_place,
-        remarks: item.remarks,
-        father_name: item.father_id ? fatherMap[item.father_id] || null : null,
+      ...item,
+      is_alive: !!item.is_alive,
+      father_name: item.father_id ? fatherMap[item.father_id] || null : null,
+      mother_display_name: item.mother_name || (item.mother_id ? motherMap[item.mother_id] || null : null),
+      spouse: spousesMap[item.id] || item.spouse || null,
     }));
 
     return { data: transformedData, error: null };
+  } catch (err) {
+    return { data: [], error: err instanceof Error ? err.message : "查询失败" };
+  }
 }

@@ -104,18 +104,24 @@ function FamilyMemberNodeComponent({ data }: FamilyNodeProps) {
           {nodeData.name}
         </div>
         
-        {/* 配偶信息 - 新增 */}
-        {nodeData.spouse && (
-          <div className="flex items-center justify-center gap-0.5 w-full -mt-0.5 mb-0.5">
-            <span className="text-[10px] text-muted-foreground/70 whitespace-nowrap select-none">配:</span>
-            <span 
-              className="text-xs text-muted-foreground font-medium truncate max-w-[80%] text-center"
-              title={nodeData.spouse}
-            >
-              {nodeData.spouse}
-            </span>
-          </div>
-        )}
+        {/* 配偶信息 */}
+        {nodeData.spouse && (() => {
+          const spouseNames = nodeData.spouse.split(",").filter(Boolean);
+          const display = spouseNames.length <= 2
+            ? spouseNames.join("、")
+            : `${spouseNames.slice(0, 2).join("、")} 等${spouseNames.length}位`;
+          return (
+            <div className="flex items-center justify-center gap-0.5 w-full -mt-0.5 mb-0.5">
+              <span className="text-[10px] text-muted-foreground/70 whitespace-nowrap select-none">配:</span>
+              <span
+                className="text-xs text-muted-foreground font-medium truncate max-w-[80%] text-center"
+                title={spouseNames.join("、")}
+              >
+                {display}
+              </span>
+            </div>
+          );
+        })()}
 
         <div className="flex items-center gap-1.5 flex-wrap justify-center">
           {nodeData.generation !== null && (

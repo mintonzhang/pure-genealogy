@@ -20,7 +20,7 @@ import {
   Minimize,
   User,
   X,
-  Map,
+  MapIcon,
 } from "lucide-react";
 import SpriteText from "three-spritetext";
 import { useTheme } from "next-themes";
@@ -104,14 +104,37 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
 
   // 转换数据为 graph 格式
   const graphData = useMemo(() => {
+    // 找到族谱起点
+    let rootMember = data.find((m) => m.is_root);
+    if (!rootMember) {
+      const memberMap = new Map(data.map((m) => [m.id, m]));
+      rootMember = data.find((m) => !m.father_id || !memberMap.has(m.father_id));
+    }
+
+    // 收集主树成员 ID
+    const mainTreeIds = new Set<number>();
+    if (rootMember) {
+      const queue = [rootMember.id];
+      const visited = new Set<number>();
+      const idMap = new Map(data.map((m) => [m.id, m]));
+      while (queue.length > 0) {
+        const mid = queue.shift()!;
+        if (visited.has(mid)) continue;
+        visited.add(mid);
+        mainTreeIds.add(mid);
+        const children = data.filter((c) => c.father_id === mid);
+        children.forEach((c) => queue.push(c.id));
+      }
+    }
+
     const nodes: GraphNode[] = data.map((member) => ({
       ...member,
-      // 根据代数计算颜色分组，或者其他逻辑
       group: member.generation || 0,
+      isDimmed: rootMember ? !mainTreeIds.has(member.id) : false,
     }));
 
     const links = data
-      .filter((member) => member.father_id)
+      .filter((member) => member.father_id && mainTreeIds.has(member.father_id) && mainTreeIds.has(member.id))
       .map((member) => ({
         source: member.father_id!,
         target: member.id,
@@ -271,6 +294,13 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
     return data.find((m) => m.id === fatherId)?.name;
   };
 
+  // 获取母亲姓名
+  const getMotherName = (motherId: number | null, motherName: string | null) => {
+    if (motherName) return motherName;
+    if (!motherId) return null;
+    return data.find((m) => m.id === motherId)?.name;
+  };
+
   // 主题颜色配置
   const isDark = theme === "dark";
   const bgColor = isDark ? "#1c1917" : "#ffffff"; // background based on Stone theme
@@ -321,7 +351,7 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
           title="自动巡游"
           className={isTourActive ? "animate-pulse" : ""}
         >
-          <Map className="h-4 w-4" />
+          <MapIcon className="h-4 w-4" />
         </Button>
       </div>
 
@@ -346,12 +376,13 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
         nodeThreeObjectExtend={true}
         nodeThreeObject={(node: any) => {
           const sprite = new SpriteText(node.name);
-          sprite.color = node.id === highlightedId ? "#ff0000" : nodeTextColor;
+          const isDimmed = node.isDimmed;
+          sprite.color = node.id === highlightedId ? "#ff0000" : isDimmed ? "rgba(150,150,150,0.5)" : nodeTextColor;
           sprite.textHeight = 6;
           sprite.padding = 2;
-          sprite.backgroundColor = isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)";
+          sprite.backgroundColor = isDark ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.3)";
           sprite.borderRadius = 4;
-          sprite.position.y = 12; // 显示在节点上方
+          sprite.position.y = 12;
           return sprite;
         }}
         
@@ -399,6 +430,7 @@ export function FamilyForceGraph({ data }: ForceGraphProps) {
         onOpenChange={setIsDetailOpen}
         member={selectedMember}
         fatherName={getFatherName(selectedMember?.father_id || null)}
+        motherName={getMotherName(selectedMember?.mother_id || null, selectedMember?.mother_name || null)}
       />
     </div>
   );
