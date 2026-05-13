@@ -1,7 +1,7 @@
 # pure-genealogy 族谱管理系统
 
 <p align="center">
-  <video src="docs/demo.mp4" controls width="800" poster="app/demo.gif"></video>
+  <video src="https://raw.githubusercontent.com/mintonzhang/pure-genealogy/main/docs/demo.mp4" controls width="800" poster="app/demo.gif"></video>
 </p>
 
 <p align="center">
