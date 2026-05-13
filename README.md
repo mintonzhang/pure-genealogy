@@ -5,6 +5,10 @@
 </p>
 
 <p align="center">
+  <video src="app/demo.mp4" controls width="800" poster="app/demo.gif"></video>
+</p>
+
+<p align="center">
   一个基于 Next.js 15 和 SQLite 构建的现代化、全中文家族族谱管理系统。
 </p>
 
