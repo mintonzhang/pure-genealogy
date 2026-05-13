@@ -110,6 +110,28 @@ npm run dev
 | `ADMIN_PASSWORD` | 管理员密码（Docker 自动创建） | admin |
 | `DB_PATH` | 数据库文件路径 | data/family.db |
 
+### 明朝皇族 Demo 数据库
+
+项目中附带了一份明朝皇族 demo 数据库 `data/ming-demo.db`，包含从明太祖朱元璋到崇祯帝的完整皇帝世系及各大藩王后代，共 **140 位家族成员**。
+
+本地开发使用方式：
+
+```bash
+# 复制 demo 数据库替换默认数据库
+cp data/ming-demo.db data/family.db
+
+# 然后正常启动
+npm run dev
+```
+
+登录后即可浏览明朝 16 帝及南明 3 帝的完整族谱，体验 2D/3D 图谱、统计面板、时间轴等功能。
+
+如需重新生成：
+
+```bash
+npx tsx scripts/build-ming-demo.ts
+```
+
 ## 项目结构
 
 ```
