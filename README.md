@@ -1,10 +1,6 @@
 # pure-genealogy 族谱管理系统
 
 <p align="center">
-  <img alt="pure-genealogy Tree" src="app/demo.gif" width="800">
-</p>
-
-<p align="center">
   <video src="docs/demo.mp4" controls width="800" poster="app/demo.gif"></video>
 </p>
 
