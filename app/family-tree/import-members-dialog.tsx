@@ -24,13 +24,14 @@ import { Input } from "@/components/ui/input";
 import { Upload, Download, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { batchCreateFamilyMembers, type ImportMemberInput } from "./actions";
-import { FAMILY_SURNAME } from "@/lib/utils";
+import { useSurname } from "@/components/surname-provider";
 
 interface ImportMembersDialogProps {
   onSuccess?: () => void;
 }
 
 export function ImportMembersDialog({ onSuccess }: ImportMembersDialogProps) {
+  const FAMILY_SURNAME = useSurname();
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [parsedData, setParsedData] = React.useState<ImportMemberInput[]>([]);

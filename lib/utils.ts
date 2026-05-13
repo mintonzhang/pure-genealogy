@@ -8,4 +8,5 @@ export function cn(...inputs: ClassValue[]) {
 // 数据库已从 Supabase 迁移到本地 SQLite，此检查仅作参考
 export const hasDatabase = true;
 
-export const FAMILY_SURNAME = process.env.NEXT_PUBLIC_FAMILY_SURNAME || "刘";
+// 服务端运行时读取，客户端组件请使用 useSurname() hook
+export const FAMILY_SURNAME = process.env.NEXT_PUBLIC_FAMILY_SURNAME || process.env.FAMILY_SURNAME || "刘";

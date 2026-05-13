@@ -20,9 +20,9 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const prefillEmail = process.env.NEXT_PUBLIC_LOGIN_EMAIL ?? "";
+  const prefillUsername = process.env.NEXT_PUBLIC_LOGIN_USERNAME ?? "";
   const prefillPassword = process.env.NEXT_PUBLIC_LOGIN_PASSWORD ?? "";
-  const [email, setEmail] = useState(prefillEmail);
+  const [username, setUsername] = useState(prefillUsername);
   const [password, setPassword] = useState(prefillPassword);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +37,7 @@ export function LoginForm({
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "登录失败");
@@ -55,21 +55,21 @@ export function LoginForm({
         <CardHeader>
           <CardTitle className="text-2xl">登录</CardTitle>
           <CardDescription>
-            请输入您的邮箱登录账户
+            请输入您的用户名登录账户
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">邮箱</Label>
+                <Label htmlFor="username">用户名</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
+                  id="username"
+                  type="text"
+                  placeholder="请输入用户名"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">

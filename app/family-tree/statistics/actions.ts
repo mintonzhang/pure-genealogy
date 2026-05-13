@@ -16,7 +16,7 @@ export async function fetchFamilyStatistics(): Promise<{
   data: StatisticsData | null;
   error: string | null;
 }> {
-  const db = getDb();
+  const db = await getDb();
 
   try {
     const members = db

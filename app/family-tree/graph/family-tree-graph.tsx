@@ -43,7 +43,7 @@ import { FamilyMemberNodeType, type FamilyNodeData } from "./family-node";
 import { GenerationNodeType } from "./generation-node";
 import { toChineseNum } from "./utils/chinese-num";
 import { getBranchBaseColor, generateBranchColor, type HSLColor } from "./utils/colors";
-import { FAMILY_SURNAME } from "@/lib/utils";
+import { useSurname } from "@/components/surname-provider";
 import { FlowingEdge } from "./flowing-edge";
 import type { FamilyMemberNode } from "./actions";
 import dagre from "@dagrejs/dagre";
@@ -301,6 +301,7 @@ function getLayoutedElements(
 }
 
 const FamilyTreeGraphInner = memo(function FamilyTreeGraphInner({ initialData, onMemberClick }: FamilyTreeGraphInnerProps) {
+  const FAMILY_SURNAME = useSurname();
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
 

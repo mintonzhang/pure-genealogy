@@ -2,9 +2,16 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "pure-genealogy-default-secret-change-in-production"
-);
+const SECRET = process.env.JWT_SECRET || "pure-genealogy-default-secret-change-in-production";
+
+// 服务端启动时检测默认密钥并警告
+if (!process.env.JWT_SECRET && typeof window === "undefined") {
+  console.warn(
+    "[auth] 警告: JWT_SECRET 未设置，正在使用不安全的默认密钥。生产环境请务必设置 JWT_SECRET 环境变量。"
+  );
+}
+
+const JWT_SECRET = new TextEncoder().encode(SECRET);
 
 const COOKIE_NAME = "auth-token";
 
@@ -16,17 +23,17 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-export async function signToken(payload: { id: number; email: string }): Promise<string> {
+export async function signToken(payload: { id: number; username: string }): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
     .sign(JWT_SECRET);
 }
 
-export async function verifyToken(token: string): Promise<{ id: number; email: string } | null> {
+export async function verifyToken(token: string): Promise<{ id: number; username: string } | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload as { id: number; email: string };
+    return payload as { id: number; username: string };
   } catch {
     return null;
   }
@@ -54,7 +61,7 @@ export async function clearSessionCookie() {
   });
 }
 
-export async function getSessionUser(): Promise<{ id: number; email: string } | null> {
+export async function getSessionUser(): Promise<{ id: number; username: string } | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;

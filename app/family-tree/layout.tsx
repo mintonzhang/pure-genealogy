@@ -29,9 +29,6 @@ export default function FamilyTreeLayout({
             <Link href="/family-tree/graph-3d" className="hover:text-primary transition-colors">
               3D 族谱
             </Link>
-            <Link href="/family-tree/graph-force" className="hover:text-primary transition-colors">
-              关系网
-            </Link>
             <Link href="/family-tree/timeline" className="hover:text-primary transition-colors">
               时间轴
             </Link>

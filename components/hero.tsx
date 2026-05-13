@@ -1,7 +1,8 @@
 import { NextLogo } from "./next-logo";
-import { FAMILY_SURNAME } from "@/lib/utils";
+import { useSurname } from "./surname-provider";
 
 export function Hero() {
+  const FAMILY_SURNAME = useSurname();
   return (
     <div className="flex flex-col gap-8 lg:gap-16 items-center px-4">
       <div className="flex gap-8 justify-center items-center">

@@ -15,7 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { cn, FAMILY_SURNAME } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useSurname } from "@/components/surname-provider";
 import type { BiographyMember } from "./actions";
 import { RichTextViewer } from "@/components/rich-text/viewer";
 
@@ -684,6 +685,7 @@ export function BiographyBook({ members }: BiographyBookProps) {
 
 // 封面组件（使用 memo 避免不必要的重渲染）
 const CoverPage = memo(function CoverPage({ totalPages }: { totalPages: number }) {
+    const FAMILY_SURNAME = useSurname();
     return (
         <div className="w-full h-full bg-gradient-to-br from-amber-900 via-amber-800 to-amber-950 rounded-r-lg shadow-2xl flex flex-col items-center justify-center p-8 relative overflow-hidden">
             {/* 封面装饰纹理 */}

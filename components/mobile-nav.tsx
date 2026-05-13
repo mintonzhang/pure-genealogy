@@ -37,11 +37,6 @@ export function MobileNav({ children }: { children: React.ReactNode }) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/family-tree/graph-force" className="w-full cursor-pointer">
-            关系网
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
           <Link href="/family-tree/timeline" className="w-full cursor-pointer">
             时间轴
           </Link>

@@ -47,7 +47,7 @@ export async function fetchFamilyMembers(
   pageSize: number = 50,
   searchQuery: string = ""
 ): Promise<FetchMembersResult> {
-  const db = getDb();
+  const db = await getDb();
 
   try {
     let countQuery: string;
@@ -146,7 +146,7 @@ export interface CreateMemberInput {
 export async function createFamilyMember(
   input: CreateMemberInput
 ): Promise<{ success: boolean; error: string | null }> {
-  const db = getDb();
+  const db = await getDb();
   try {
     // 如果设为起点，先清除其他成员的起点标记
     if (input.is_root) {
@@ -208,7 +208,7 @@ export async function deleteFamilyMembers(
     return { success: false, error: "没有选择要删除的成员" };
   }
 
-  const db = getDb();
+  const db = await getDb();
   try {
     const placeholders = ids.map(() => "?").join(",");
     db.prepare(`DELETE FROM family_members WHERE id IN (${placeholders})`).run(...ids);
@@ -223,7 +223,7 @@ export async function deleteFamilyMembers(
 export async function fetchAllMembersForSelect(): Promise<
   { id: number; name: string; generation: number | null; gender: string | null }[]
 > {
-  const db = getDb();
+  const db = await getDb();
   const data = db
     .prepare("SELECT id, name, generation, gender FROM family_members ORDER BY generation ASC, name ASC")
     .all() as { id: number; name: string; generation: number | null; gender: string | null }[];
@@ -236,7 +236,7 @@ export interface UpdateMemberInput extends CreateMemberInput {
 
 // 根据 ID 获取单个成员
 export async function fetchMemberById(id: number): Promise<FamilyMember | null> {
-  const db = getDb();
+  const db = await getDb();
   const data = db.prepare("SELECT * FROM family_members WHERE id = ?").get(id) as FamilyMember | undefined;
 
   if (!data) return null;
@@ -274,7 +274,7 @@ export async function fetchMemberById(id: number): Promise<FamilyMember | null> 
 export async function updateFamilyMember(
   input: UpdateMemberInput
 ): Promise<{ success: boolean; error: string | null }> {
-  const db = getDb();
+  const db = await getDb();
   try {
     // 如果设为起点，先清除其他成员的起点标记
     if (input.is_root) {
@@ -349,7 +349,7 @@ export interface ImportMemberInput {
 export async function batchCreateFamilyMembers(
   members: ImportMemberInput[]
 ): Promise<{ success: boolean; count: number; error: string | null }> {
-  const db = getDb();
+  const db = await getDb();
 
   try {
     // 1. 提取所有不为空的父亲姓名
@@ -420,7 +420,7 @@ export async function batchCreateFamilyMembers(
 export async function fetchMembersForTimeline(): Promise<
   { id: number; name: string; birthday: string | null; death_date: string | null; generation: number | null }[]
 > {
-  const db = getDb();
+  const db = await getDb();
   const data = db
     .prepare("SELECT id, name, birthday, death_date, generation FROM family_members ORDER BY birthday ASC")
     .all() as { id: number; name: string; birthday: string | null; death_date: string | null; generation: number | null }[];

@@ -29,7 +29,7 @@ export async function fetchMembersWithBiography(): Promise<{
   data: BiographyMember[];
   error: string | null;
 }> {
-  const db = getDb();
+  const db = await getDb();
 
   try {
     const data = db

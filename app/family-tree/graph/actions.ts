@@ -38,7 +38,7 @@ export interface FetchGraphResult {
 }
 
 export async function fetchAllFamilyMembers(): Promise<FetchGraphResult> {
-  const db = getDb();
+  const db = await getDb();
   try {
     const data = db
       .prepare(
