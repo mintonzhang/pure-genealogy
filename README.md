@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <video src="app/demo.mp4" controls width="800" poster="app/demo.gif"></video>
+  <video src="docs/demo.mp4" controls width="800" poster="app/demo.gif"></video>
 </p>
 
 <p align="center">
