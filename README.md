@@ -1,9 +1,5 @@
 # pure-genealogy 族谱管理系统
-
-<p align="center">
-  <video src="https://raw.githubusercontent.com/mintonzhang/pure-genealogy/main/docs/demo.mp4" controls width="800" poster="app/demo.gif"></video>
-</p>
-
+https://github.com/user-attachments/assets/872e054d-e673-45a5-9593-73e9d411b6df
 <p align="center">
   一个基于 Next.js 15 和 SQLite 构建的现代化、全中文家族族谱管理系统。
 </p>
